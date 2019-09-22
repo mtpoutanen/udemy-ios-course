@@ -68,10 +68,10 @@ class ViewController: UIViewController {
     func checkAnswer() {
         let question = allQuestions.list[questionIndex]
         if (question.answer == pickedAnswer) {
-            print("correct")
+            ProgressHUD.showSuccess("Correct!")
             score = score + 1
         } else {
-            print("wrong")
+            ProgressHUD.showError("Wrong")
         }
     }
     
