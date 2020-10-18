@@ -13,7 +13,7 @@ struct MainWeatherData: Codable {
     let feels_like: Double
     let temp_min: Double
     let temp_max: Double
-    let pressurexxx: Double
+    let pressure: Double
     let humidity: Double
 }
 
