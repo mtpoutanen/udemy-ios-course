@@ -8,20 +8,26 @@
 
 import UIKit
 
-class WeatherViewController: UIViewController, UITextFieldDelegate {
+class WeatherViewController: UIViewController, UITextFieldDelegate, WeatherManagerDelegate {
 
     @IBOutlet weak var conditionImageView: UIImageView!
     @IBOutlet weak var temperatureLabel: UILabel!
     @IBOutlet weak var cityLabel: UILabel!
     @IBOutlet weak var searchTextField: UITextField!
     
+    var weatherManager = WeatherManager()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         searchTextField.delegate = self
+        weatherManager.delegate = self
     }
 
     func handleSearch () {
-        print(searchTextField.text!)
+        if let city = searchTextField.text {
+            weatherManager.fetchWeather(cityName:city)
+        }
+        
         searchTextField.endEditing(true)
     }
     
@@ -46,6 +52,18 @@ class WeatherViewController: UIViewController, UITextFieldDelegate {
             textField.placeholder = "Yo, type sumtin'"
         }
         return false
+    }
+    
+    func didFail(with error: Error?) {
+        if let safeError = error {
+            print("Printing error in controller: \(safeError)")
+        }
+    }
+    
+    func didUpdateWeather(_ weatherManager: WeatherManager, weather: WeatherModel) {
+        print("In Controller, city name \(weather.cityName), temperature: \(weather.formattedTemperature)")
+//        cityLabel.text = weather.cityName
+//        temperatureLabel.text = weather.formattedTemperature
     }
 }
 
