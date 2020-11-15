@@ -7,22 +7,77 @@
 //
 
 import UIKit
+import CoreLocation
 
-class WeatherViewController: UIViewController, UITextFieldDelegate, WeatherManagerDelegate {
+class WeatherViewController: UIViewController {
 
     @IBOutlet weak var conditionImageView: UIImageView!
     @IBOutlet weak var temperatureLabel: UILabel!
     @IBOutlet weak var cityLabel: UILabel!
     @IBOutlet weak var searchTextField: UITextField!
+    @IBOutlet weak var locationButton: UIButton!
     
     var weatherManager = WeatherManager()
+    let locationManager = CLLocationManager()
     
     override func viewDidLoad() {
         super.viewDidLoad()
         searchTextField.delegate = self
         weatherManager.delegate = self
+        locationManager.delegate = self
+        
+        locationManager.requestWhenInUseAuthorization()
+        print("requesting location")
+        locationManager.requestLocation()
+    }
+}
+
+//MARK: - CLLocationManagerDelegate
+
+extension WeatherViewController: CLLocationManagerDelegate {
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        if let location = locations.last {
+            locationManager.stopUpdatingLocation()
+            let lat = location.coordinate.latitude
+            let lon = location.coordinate.longitude
+            weatherManager.fetchWeather(lat, longitude: lon)
+        }
+
+    }
+    
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        print("location fetching errored")
+        print(error)
+    }
+    
+    @IBAction func locationPressed(_ sender: UIButton) {
+        locationManager.requestLocation()
     }
 
+}
+
+//MARK: - WeatherManagerDelegate
+
+extension WeatherViewController: WeatherManagerDelegate {
+    func didFail(with error: Error?) {
+        if let safeError = error {
+            print("Printing error in controller: \(safeError)")
+        }
+    }
+    
+    func didUpdateWeather(_ weatherManager: WeatherManager, weather: WeatherModel) {
+        print("In Controller, city name \(weather.cityName), temperature: \(weather.formattedTemperature)")
+        DispatchQueue.main.async {
+            self.cityLabel.text = weather.cityName
+            self.temperatureLabel.text = weather.formattedTemperature
+            self.conditionImageView.image = UIImage(systemName: weather.conditionName)
+        }
+    }
+}
+
+//MARK: - UITextFieldDelegate
+
+extension WeatherViewController: UITextFieldDelegate {
     func handleSearch () {
         if let city = searchTextField.text {
             weatherManager.fetchWeather(cityName:city)
@@ -30,7 +85,7 @@ class WeatherViewController: UIViewController, UITextFieldDelegate, WeatherManag
         
         searchTextField.endEditing(true)
     }
-    
+
     @IBAction func onSearchPress(_ sender: Any) {
         handleSearch()
     }
@@ -53,20 +108,5 @@ class WeatherViewController: UIViewController, UITextFieldDelegate, WeatherManag
         }
         return false
     }
-    
-    func didFail(with error: Error?) {
-        if let safeError = error {
-            print("Printing error in controller: \(safeError)")
-        }
-    }
-    
-    func didUpdateWeather(_ weatherManager: WeatherManager, weather: WeatherModel) {
-        print("In Controller, city name \(weather.cityName), temperature: \(weather.formattedTemperature)")
-        DispatchQueue.main.async {
-            self.cityLabel.text = weather.cityName
-            self.temperatureLabel.text = weather.formattedTemperature
-            self.conditionImageView.image = UIImage(systemName: weather.conditionName)
-        }
-    }
-}
 
+}
